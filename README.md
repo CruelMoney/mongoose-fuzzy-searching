@@ -74,6 +74,7 @@ User.fuzzySearch('jo').sort({ age: -1 }).exec(function (err, users) {
 ### Plugin Options
 
 Options must have a `fields` key, which is an Array of `Strings` or an Array of `Objects`.
+You can also provide an optional `language_override` field, if you use the language field in your schema for something else.
 
 ```javascript
 var mongoose_fuzzy_searching = require('mongoose-fuzzy-searching');
@@ -91,21 +92,22 @@ UserSchema.plugin(mongoose_fuzzy_searching, {
         name: 'firstName'
     }, {
         name: 'lastName'
-    }]
+    }],
+    language_override: 'languageField'
 });
 ```
 #### Object keys
 
 The below table contains the expected keys for an object
 
-| __key__| __type__ | __default__ | __description__ |
-|----------------------------|-------------------|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
-| name | __String__ | null |Collection key name |
-| minSize | __Integer__ | 2 |N-grams min size. [Learn more about N-grams](http://text-analytics101.rxnlp.com/2014/11/what-are-n-grams.html) |
-| weight | __Integer__ | 1 | Denotes the significance of the field relative to the other indexed fields in terms of the text search score. [Learn more about index weights](https://docs.mongodb.com/manual/tutorial/control-results-of-text-search/) |
-| prefixOnly | __Boolean__ | false | Only return ngrams from start of word. (It gives more precise results) | 
-| escapeSpecialCharacters | __Boolean__ | true | Remove special characters from N-grams.|
-| keys | __Array[String]__ | null | If the type of the collection attribute is `Object`, you can define which attributes will be used for fuzzy searching |
+| __key__                 | __type__          | __default__ | __description__                                                                                                                                                                                                          |
+| ----------------------- | ----------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| name                    | __String__        | null        | Collection key name                                                                                                                                                                                                      |
+| minSize                 | __Integer__       | 2           | N-grams min size. [Learn more about N-grams](http://text-analytics101.rxnlp.com/2014/11/what-are-n-grams.html)                                                                                                           |
+| weight                  | __Integer__       | 1           | Denotes the significance of the field relative to the other indexed fields in terms of the text search score. [Learn more about index weights](https://docs.mongodb.com/manual/tutorial/control-results-of-text-search/) |
+| prefixOnly              | __Boolean__       | false       | Only return ngrams from start of word. (It gives more precise results)                                                                                                                                                   |
+| escapeSpecialCharacters | __Boolean__       | true        | Remove special characters from N-grams.                                                                                                                                                                                  |
+| keys                    | __Array[String]__ | null        | If the type of the collection attribute is `Object`, you can define which attributes will be used for fuzzy searching                                                                                                    |
 
 Example:
 
@@ -150,11 +152,11 @@ If the second parameter is the options, then the third parameter is the callback
 
 The below table contains the expected keys for the first parameter (if is an object)
 
-| __key__ | __type__ | __deafult__ | __description__ |
-|----------------------------|-------------------|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
-| query | __String__ | null | String to search |
-| minSize | __Integer__ | 2 | N-grams min size. |
-| prefixOnly | __Boolean__ | false | Only return ngrams from start of word. (It gives more precise results) the prefix |
+| __key__    | __type__    | __deafult__ | __description__                                                                   |
+| ---------- | ----------- | ----------- | --------------------------------------------------------------------------------- |
+| query      | __String__  | null        | String to search                                                                  |
+| minSize    | __Integer__ | 2           | N-grams min size.                                                                 |
+| prefixOnly | __Boolean__ | false       | Only return ngrams from start of word. (It gives more precise results) the prefix |
 
 Example:
 
