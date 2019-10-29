@@ -2,12 +2,36 @@
 
 var mongoose = require("mongoose");
 var Model = mongoose.Model;
-var replaceLanguageCharacters = require("./languageCharacters");
+var model = mongoose.model;
 
+/**
+ * Reusable constant values
+ * @typedef {Object} constants
+ * @property {number} DEFAULT_MIN_SIZE - Default min size for anagrams.
+ * @property {boolean} DEFAULT_PREFIX_ONLY - Whether return ngrams from start of word or not
+ */
 var constants = {
 	DEFAULT_MIN_SIZE: 2,
 	DEFAULT_PREFIX_ONLY: false
 };
+
+/* istanbul ignore next */
+function parseArguments(args, i1, i2) {
+    var options = {};
+    var callback = null;
+
+    if (args[i1] && isFunction(args[i1])) {
+        callback = args[i1];
+    } else if (args[i1] && isObject(args[i1])) {
+        options = args[i1];
+    }
+
+    if (!callback && typeof args[i2] === 'function') {
+        callback = args[i2];
+    }
+
+    return { options, callback };
+}
 
 /**
  * Creates sequence of characters taken from the given string.
@@ -99,6 +123,7 @@ function makeNGrams(text, escapeSpecialCharacters, minSize, prefixOnly) {
  * @return {string} the given text without the special characters.
  */
 function replaceSymbols(text, escapeSpecialCharacters) {
+<<<<<<< HEAD
 	text = text.toLowerCase();
 	if (escapeSpecialCharacters) {
 		text = text.replace(/[!\"#%&\'\(\)\*\+,-\.\/:;<=>?@\[\\\]\^`\{\|\}~]/g, ""); // remove special characters
@@ -107,6 +132,15 @@ function replaceSymbols(text, escapeSpecialCharacters) {
 	text = replaceLanguageCharacters(text);
 
 	return text;
+=======
+    text = text.toLowerCase();
+    if (escapeSpecialCharacters) {
+        text = text.replace(/[!\"#%&\'\(\)\*\+,-\.\/:;<=>?@\[\\\]\^`\{\|\}~]/g, ''); // remove special characters
+    }
+    text = text.replace(/_/g, ' ');
+
+    return text;
+>>>>>>> origin/patch-1
 }
 
 /* istanbul ignore next */
@@ -117,11 +151,20 @@ function createSchemaObject(typeValue, options) {
 
 /**
  * Returns if the variable is an object and if the the object is empty
- * @param {object} obj
+ * @param {any} obj
  * @return {boolean}
  */
 function isObject(obj) {
 	return !!obj && obj.constructor === Object && Object.keys(obj).length > 0;
+}
+
+/**
+ * Returns if the variable is a Function
+ * @param {any} fn
+ * @return {boolean}
+ */
+function isFunction(fn) {
+    return !!(fn && ("function" === typeof fn || fn instanceof Function));
 }
 
 /**
@@ -155,6 +198,23 @@ function addArrayToSchema(name) {
 	};
 }
 
+/* istanbul ignore next */
+function createByFieldType(fields, strCb, objectCb, objectKeysCb) {
+    fields.forEach(function (item) {
+        if (typeof item === 'string' || item instanceof String && isFunction(strCb)) {
+            strCb(item);
+        } else if (isObject(item)) {
+            if (item.keys && isFunction(objectKeysCb)) {
+                objectKeysCb(item);
+            } else if (isFunction(objectCb)) {
+                objectCb(item);
+            }
+        } else {
+            throw new TypeError('Fields items must be String or Object.');
+        }
+    });
+}
+
 /**
  * Add the fields to the collection
  * @param {object} schema - The mongoose schema
@@ -163,6 +223,7 @@ function addArrayToSchema(name) {
  */
 
 /* istanbul ignore next */
+<<<<<<< HEAD
 function createFields(schema, fields, language_override) {
 	var indexes = {};
 	var weights = {};
@@ -195,6 +256,34 @@ function createFields(schema, fields, language_override) {
 	}
 
 	schema.index(indexes, options);
+=======
+function createFields(schema, fields) {
+    var indexes = {};
+    var weights = {};
+
+    function strCb(item) {
+        schema.add(addToSchema(item));
+        indexes[`${item}_fuzzy`] = 'text';
+    }
+
+    function objectCb(item) {
+        schema.add(addToSchema(item.name));
+        indexes[`${item.name}_fuzzy`] = 'text';
+        if (item.weight) {
+            weights[`${item.name}_fuzzy`] = item.weight;
+        }
+    }
+
+    function objectKeysCb(item) {
+        item.keys.forEach(key => {
+            indexes[`${item.name}_fuzzy.${key}_fuzzy`] = 'text';
+        });
+        schema.add(addArrayToSchema(item.name));
+    }
+
+    createByFieldType(fields, strCb, objectCb, objectKeysCb);
+    schema.index(indexes, { weights });
+>>>>>>> origin/patch-1
 }
 
 /**
@@ -205,6 +294,7 @@ function createFields(schema, fields, language_override) {
 
 /* istanbul ignore next */
 function createNGrams(attributes, fields) {
+<<<<<<< HEAD
 	fields.forEach(function(item) {
 		if (
 			attributes[item] &&
@@ -240,6 +330,37 @@ function createNGrams(attributes, fields) {
 			}
 		}
 	});
+=======
+    function strCb(item) {
+        if (attributes[item]) {
+            attributes[`${item}_fuzzy`] = makeNGrams(attributes[item]);
+        }
+    }
+
+    function objectCb(item) {
+        if (attributes[`${item.name}`]) {
+            var escapeSpecialCharacters = item.escapeSpecialCharacters !== false;
+            attributes[`${item.name}_fuzzy`] = makeNGrams(attributes[item.name], escapeSpecialCharacters, item.minSize, item.prefixOnly);
+        }
+    }
+
+    function objectKeysCb(item) {
+        if (attributes[`${item.name}`]) {
+            var escapeSpecialCharacters = item.escapeSpecialCharacters !== false;
+            var attrs = [];
+            attributes[item.name].forEach(function (data) {
+                var obj = {};
+                item.keys.forEach(function (key, index) {
+                    obj = Object.assign({}, obj, { [`${key}_fuzzy`]: makeNGrams(data[key], escapeSpecialCharacters, item.minSize, item.prefixOnly) });
+                });
+                attrs.push(obj);
+            });
+            attributes[`${item.name}_fuzzy`] = attrs;
+        }
+    }
+
+    createByFieldType(fields, strCb, objectCb, objectKeysCb);
+>>>>>>> origin/patch-1
 }
 
 /**
@@ -249,6 +370,7 @@ function createNGrams(attributes, fields) {
 
 /* istanbul ignore next */
 function removeFuzzyElements(fields) {
+<<<<<<< HEAD
 	return function(doc, ret, opt) {
 		fields.forEach(function(item) {
 			if (typeof item === "string" || item instanceof String) {
@@ -259,6 +381,20 @@ function removeFuzzyElements(fields) {
 		});
 		return ret;
 	};
+=======
+    return function (doc, ret, opt) {
+        function strCb(item) {
+            delete ret[`${item}_fuzzy`];
+        }
+
+        function objectCb(item) {
+            delete ret[`${item.name}_fuzzy`];
+        }
+
+        createByFieldType(fields, strCb, objectCb);
+        return ret;
+    }
+>>>>>>> origin/patch-1
 }
 
 /**
@@ -267,6 +403,7 @@ function removeFuzzyElements(fields) {
  * @param {object} schema - Mongo Collection
  * @param {object} options - plugin options
  */
+<<<<<<< HEAD
 module.exports = function(schema, options) {
 	if (!options || (options && !options.fields)) {
 		throw new Error("You must set at least one field for fuzzy search.");
@@ -375,4 +512,98 @@ module.exports = function(schema, options) {
 			])
 			.where(search);
 	};
+=======
+module.exports = function (schema, options) {
+    if (!options || (options && !options.fields)) {
+        throw new Error('You must set at least one field for fuzzy search.');
+    }
+
+    if (!Array.isArray(options.fields)) {
+        throw new TypeError('Fields must be an array.');
+    }
+
+    options.fields.forEach(function (item) {
+        if (isObject(item) && item.keys && (!Array.isArray(item.keys) && typeof item.keys !== 'string')) {
+            throw new TypeError('Key must be an array or a string.');
+        }
+    });
+
+    createFields(schema, options.fields);
+
+    var returnOptions = {
+        transform: removeFuzzyElements(options.fields),
+        getters: true,
+        setters: true,
+        virtuals: true
+    };
+    schema.set('toObject', returnOptions);
+    schema.set('toJSON', returnOptions);
+
+    function saveMiddleware(next) {
+        if (this) {
+            createNGrams(this, options.fields);
+            next();
+        }
+    }
+
+    function updateMiddleware(next) {
+        if (this._update) {
+            createNGrams(this._update, options.fields);
+            next();
+        }
+    }
+
+    function insertMany(next, docs) {
+        docs.forEach(function (doc) {
+            createNGrams(doc, options.fields)
+        });
+        next();
+    }
+
+    schema.pre('save', saveMiddleware);
+    schema.pre('update', updateMiddleware);
+    schema.pre('findOneAndUpdate', updateMiddleware);
+    schema.pre('insertMany', insertMany);
+    schema.pre('updateMany', updateMiddleware);
+
+    schema.statics['fuzzySearch'] = function () {
+
+        Object.values = Object.values || objectToValuesPolyfill;
+
+        var args = Object.values(arguments);
+
+        if (args.length === 0 && (typeof args[0] !== 'string' || !isObject(args[0]))) {
+            throw new TypeError('Fuzzy Search: First argument is mandatory and must be a string or an object.');
+        }
+
+        var queryString = isObject(args[0]) ? args[0].query : args[0];
+
+        var checkPrefixOnly = isObject(args[0]) ? args[0].prefixOnly : constants.DEFAULT_PREFIX_ONLY;
+        var defaultNgamMinSize = isObject(args[0]) ? args[0].minSize : constants.DEFAULT_MIN_SIZE;
+        var query = makeNGrams(queryString, false, defaultNgamMinSize, checkPrefixOnly).join(' ');
+
+        var parsedArguments = parseArguments(args, 1, 2);
+        var options = parsedArguments.options;
+        var callback = parsedArguments.callback;
+
+        var search;
+
+        if (!options) {
+            search = {
+                $text: {
+                    $search: query,
+                }
+            }
+        } else {
+            search = {
+                $and: [
+                    { $text: { $search: query } },
+                    options
+                ]
+            }
+        }
+
+        return Model['find'].apply(this, [search, { confidenceScore: { $meta: "textScore" } }, { sort: { confidenceScore: { $meta: "textScore" } } }, callback]);
+    };
+>>>>>>> origin/patch-1
 };

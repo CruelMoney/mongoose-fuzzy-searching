@@ -12,7 +12,6 @@ This code is based on [this article](https://medium.com/xeneta/fuzzy-search-with
   - Creates Ngrams for the selected keys in the collection
   - [Add __fuzzySearch__ method on model](#simple-usage)
   - [Work with pre-existing data](#work-with-pre-existing-data)
-  - [Limitations](#limitations)
 
 ## Installation
 Install using [npm](https://npmjs.org)
@@ -252,7 +251,9 @@ updateFuzzy(User, ['firstName']);
 In the previous example, we set `firstName` and `lastName` as the fuzzy attributes. If you remove the `firstName` from the fuzzy fields, the `firstName_fuzzy` array will not be removed by the collection. If you want to remove the array on each document you have to unset that value.
 
 ```javascript
-const removeEventUnsedFuzzyElements = (Model, attrs) => {
+const { each, queue } = require('async');
+
+const removeUnsedFuzzyElements = (Model, attrs) => {
     const docs = await Model.find();
 
     const updateToDatabase = async (data, callback) => {
@@ -279,12 +280,8 @@ const removeEventUnsedFuzzyElements = (Model, attrs) => {
 }
 
 // usage
-removeEventUnsedFuzzyElements(User, ['firstName']);
+removeUnsedFuzzyElements(User, ['firstName']);
 ```
-
-## Limitations
-
-In version `3.2`, Mongoose introduced the functions `updateMany` and `insertMany`. Unfortunately, these functions don't call pre-save and pre-update hooks, which means that the plugin can't generate the fuzzy anagrams. Instead, you have to insert or update the documents one by one.
 
 ## License
 
