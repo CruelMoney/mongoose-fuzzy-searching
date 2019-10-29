@@ -3,7 +3,6 @@
 var mongoose = require('mongoose');
 var Model = mongoose.Model;
 var model = mongoose.model;
-var replaceLanguageCharacters = require('./languageCharacters');
 
 /**
  * Reusable constant values
@@ -125,7 +124,6 @@ function replaceSymbols(text, escapeSpecialCharacters) {
         text = text.replace(/[!\"#%&\'\(\)\*\+,-\.\/:;<=>?@\[\\\]\^`\{\|\}~]/g, ''); // remove special characters
     }
     text = text.replace(/_/g, ' ');
-    text = replaceLanguageCharacters(text);
 
     return text;
 }
